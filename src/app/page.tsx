@@ -1,99 +1,113 @@
-"use client";
-import { invoke } from "@tauri-apps/api/core";
-import Image from "next/image";
-import { useCallback, useState } from "react";
-import { RoundedButton } from "@/components/RoundedButton";
+/**
+ * page.tsx — Datater CSV Editor
+ *
+ * Generic CSV viewer and editor.
+ * Open any CSV, edit cells/headers, add/delete rows and columns,
+ * then save back as a .csv file.
+ */
 
-export default function Home() {
-  const [greeted, setGreeted] = useState<string | null>(null);
-  const greet = useCallback((): void => {
-    invoke<string>("greet")
-      .then((s) => {
-        setGreeted(s);
-      })
-      .catch((err: unknown) => {
-        console.error(err);
-      });
-  }, []);
+"use client";
+
+import { useCallback } from "react";
+import { useSpreadsheet } from "@/hooks/useSpreadsheet";
+import { Toolbar } from "@/components/dashboard/Toolbar";
+import { DataTable } from "@/components/dashboard/DataTable";
+
+// Default blank spreadsheet (3 columns × 0 rows)
+const BLANK_HEADERS = ["Column 1", "Column 2", "Column 3"];
+
+export default function DashboardPage() {
+  const {
+    headers,
+    rows,
+    fileName,
+    isDirty,
+    hasData,
+    loadCSV,
+    saveAsCSV,
+    updateCell,
+    updateHeader,
+    addRow,
+    deleteRow,
+    addColumn,
+    deleteColumn,
+  } = useSpreadsheet();
+
+  // "New" creates a blank spreadsheet in-memory (no file)
+  const handleNew = useCallback(() => {
+    const blankCSV = BLANK_HEADERS.join(",") + "\r\n";
+    loadCSV(blankCSV, "untitled.csv");
+  }, [loadCSV]);
 
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <div className="min-h-screen font-sans" style={{ background: "#202020" }}>
+      {/* ── Top header ──────────────────────────────────────────────────── */}
+      <header
+        className="sticky top-0 z-20 border-b"
+        style={{ background: "#202020", borderColor: "#3a3a3a" }}
+      >
+        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center gap-3">
+          <div>
+            {/* File name + dirty indicator */}
+            <div
+              className="ml-auto flex items-center gap-2 text-xs truncate max-w-xs"
+              style={{ color: "#666" }}
+            >
+              {isDirty && (
+                <span
+                  className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0"
+                  title="Unsaved changes"
+                />
+              )}
+              <span className="truncate font-medium" style={{ color: "#888" }}>
+                {fileName || "No file loaded"}
+              </span>
+            </div>
+          </div>
 
-        <div className="flex flex-col gap-2 items-start">
-          <RoundedButton
-            onClick={greet}
-            title="Call &quot;greet&quot; from Rust"
-          />
-          <p className="break-words w-md">
-            {greeted ?? "Click the button to call the Rust function"}
-          </p>
+          {/* Stats */}
+          {hasData && (
+            <div
+              className="ml-auto flex items-center gap-3 text-xs"
+              style={{ color: "#888" }}
+            >
+              <span className="inline-flex items-center gap-1.5">
+                <span className="inline-block w-2 h-2 rounded-full bg-green-400" />
+                {rows.length.toLocaleString()} rows · {headers.length} cols
+              </span>
+            </div>
+          )}
         </div>
+      </header>
+
+      <main className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-4">
+        {/* ── Toolbar ──────────────────────────────────────────────────── */}
+        <Toolbar
+          hasData={hasData}
+          onOpen={loadCSV}
+          onNew={handleNew}
+          onSaveAs={saveAsCSV}
+        />
+
+        {/* ── Data Table ───────────────────────────────────────────────── */}
+        <DataTable
+          headers={headers}
+          rows={rows}
+          onUpdateCell={updateCell}
+          onUpdateHeader={updateHeader}
+          onAddRow={addRow}
+          onDeleteRow={deleteRow}
+          onAddColumn={addColumn}
+          onDeleteColumn={deleteColumn}
+        />
       </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+
+      {/* ── Footer ──────────────────────────────────────────────────────── */}
+      <footer
+        className="py-5 text-center text-xs border-t"
+        style={{ borderColor: "#3a3a3a", color: "#555" }}
+      >
+        Datater · {fileName || "No file"}
       </footer>
     </div>
   );
