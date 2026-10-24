@@ -46,7 +46,7 @@ export default function DashboardPage() {
         className="sticky top-0 z-20 border-b"
         style={{ background: "#202020", borderColor: "#3a3a3a" }}
       >
-        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center gap-3">
+        <div className="max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-4 flex items-center gap-3">
           <div>
             {/* File name + dirty indicator */}
             <div
@@ -80,7 +80,7 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <main className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-4">
+      <main className="max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-6 space-y-4">
         {/* ── Toolbar ──────────────────────────────────────────────────── */}
         <Toolbar
           hasData={hasData}
